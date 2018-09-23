@@ -15,22 +15,22 @@ func TestCollectorSpans(t *testing.T) {
 	collector := NewCollector(5)
 
 	// These two should be overwritten
-	if err := collector.Collect(&model.Span{}); err != nil {
+	if err := collector.Collect(model.Span{}); err != nil {
 		t.Fatal(err)
 	}
-	if err := collector.Collect(&model.Span{}); err != nil {
+	if err := collector.Collect(model.Span{}); err != nil {
 		t.Fatal(err)
 	}
 
-	want := []*model.Span{}
+	want := []model.Trace{}
 	for i := 1; i < 6; i++ {
-		span := &model.Span{
+		span := model.Span{
 			SpanContext: model.SpanContext{
 				TraceId: uint64(i),
 			},
 			OperationName: fmt.Sprintf("span %d", i),
 		}
-		want = append(want, span)
+		want = append(want, model.Trace{TraceId: uint64(i), Spans: []model.Span{span}})
 		if err := collector.Collect(span); err != nil {
 			t.Fatal(err)
 		}
@@ -40,19 +40,19 @@ func TestCollectorSpans(t *testing.T) {
 		t.Fatalf("%s", Diff(want, have))
 	}
 
-	if want, have := []*model.Span{}, collector.gather(); !reflect.DeepEqual(want, have) {
+	if want, have := []model.Trace{}, collector.gather(); !reflect.DeepEqual(want, have) {
 		t.Fatalf("%s", Diff(want, have))
 	}
 
-	want = []*model.Span{}
-	for i := 7; i < 11; i++ {
-		span := &model.Span{
+	want = []model.Trace{}
+	for i := 6; i < 11; i++ {
+		span := model.Span{
 			SpanContext: model.SpanContext{
 				TraceId: uint64(i),
 			},
 			OperationName: fmt.Sprintf("span %d", i),
 		}
-		want = append(want, span)
+		want = append(want, model.Trace{TraceId: uint64(i), Spans: []model.Span{span}})
 		if err := collector.Collect(span); err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +62,7 @@ func TestCollectorSpans(t *testing.T) {
 		t.Fatalf("%s", Diff(want, have))
 	}
 
-	if want, have := []*model.Span{}, collector.gather(); !reflect.DeepEqual(want, have) {
+	if want, have := []model.Trace{}, collector.gather(); !reflect.DeepEqual(want, have) {
 		t.Fatalf("%s", Diff(want, have))
 	}
 }
@@ -73,15 +73,15 @@ func TestCollectorFuzzSpans(t *testing.T) {
 
 	iterate := func(iteration int) {
 		toInsert := rand.Intn(capacity + 1)
-		want := []*model.Span{}
+		want := []model.Trace{}
 		for i := 0; i < toInsert; i++ {
-			span := &model.Span{
+			span := model.Span{
 				SpanContext: model.SpanContext{
 					TraceId: uint64(i),
 				},
 				OperationName: fmt.Sprintf("span %d %d", iteration, i),
 			}
-			want = append(want, span)
+			want = append(want, model.Trace{TraceId: uint64(i), Spans: []model.Span{span}})
 			if err := collector.Collect(span); err != nil {
 				t.Fatal(err)
 			}
